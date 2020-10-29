@@ -1,12 +1,8 @@
-const MAX_HEADING_CHANGE_FACTOR = 0.5;
-const DRAW_SEGMENT_RATE = 7;
-
-const MAPSIZE = 2000
 
 class Snake {
 
 	constructor(x,y) {
-		this.length = 15
+		this.length = 20
 		this.size = this.calculateSize(this.length)
 		// this.size = 50
 		this.parts = []
@@ -18,11 +14,14 @@ class Snake {
 		this.color = color(random(0), random(0,255), random(0,255))
 		this.calledOnce = true
 		// for AI snakes only
-		this.noiseOffset = random(1000, 2000)
+		this.hasTarget = false
+		this.noiseOffset = noise(random(0, 1000))
+		this.nutrient = undefined;
+		this.nearestNutrient = nutrientsArr[0]
 	}
 
 	calculateSize(length) {
-	  return 2.5 * Math.pow(length, 0.6);
+	  return 1.5 * Math.pow(length, 0.6);
 	}
 
 	limitRange(number, limit) {
@@ -63,29 +62,60 @@ class Snake {
 	  this.y += Math.sin(this.heading) * speed;
 	 
 
-	  // ??? 
+	  // draw the snake body parts in a certain frame count
+	  // the default is 7 
 	  if (this.lastDrawn <= 0) {
 	  	// console.log(this.parts.length)
 	    this.parts.push({x: this.x, y: this.y});
 	    this.lastDrawn = DRAW_SEGMENT_RATE;
 	  } else {
+	  	// the framecount reduces more if the snake is accelerating 
 	    this.lastDrawn -= speed + 0;
 	  }
-	  
+	  // the snake begins to shift if the length of the body parts array is longer than it's expected
 	  if (this.parts.length > this.length) {
 	    const last = this.parts.shift();
-	  	
 	  }
+
+
 	  this.size = this.calculateSize(this.length);
 	  
 	  return this;
 	}
+	// handle AI snake's movement:
+	// if it has a target (food) to eat, he will keep on that direction until he eats the food
+	// otherwise, it will roam randomly 
+	// In both cases, it will try its best to avoid colliding with other snakes' bodies.
 	updateAI() {
-
-		const AIheading = {headingDegree : map(noise(this.noiseOffset), 0, 1, -200, 200), fastMode: false}
-		
-		this.update(AIheading)
-		this.noiseOffset++
+		// console.log(this.hasTarget)
+		if (!this.hasTarget) {
+			nutrientsArr.forEach ( nutrient => {
+				const dis = dist(nutrient.x, nutrient.y, this.x, this.y)
+				// console.log('123')
+				if (dis < 100) {
+					this.hasTarget = true
+					this.nutrient = nutrient
+					// console.log(nutrient)
+				}
+				 
+			})
+			this.update({headingDegree: map(this.noiseOffset, 0, 1, -3.14, 3.14), fastMode: false})
+			this.noiseOffset++
+		}
+		// console.log(this.heading)
+		else {
+			const dis = dist(this.nutrient.x, this.nutrient.y, this.x, this.y)
+			if (dis <= 10) {
+				this.hasTarget = false
+				// this.update({headingDegree: random(-3.14,3.14), fastMode: false})
+				
+			} 
+			// console.log(AIheadDegree(this.x, this.y, this.nutrient.x, this.nutrient.y))
+			this.update(AIheadDegree(this.x, this.y, this.nutrient.x, this.nutrient.y))
+				
+			
+			
+		}
 	}
 	grow() {
 		this.length += 2
@@ -97,10 +127,12 @@ class Snake {
 			translate(part.x, part.y);
 			// spawn new nutrients at the location where the snake dies
 			if (this.calledOnce) {
+				nutrientsArr.push(new Nutrient(this.x, this.y))
 				nutrientsArr.push(new Nutrient(part.x, part.y))
 			}
 			pop();
 		})
+		this.speed = 0
 		this.calledOnce = false
 	}
 	// check collision with other snakes' body
@@ -123,15 +155,17 @@ class Snake {
 	}
 	display() {
 		// console.log(this.state)
-		// if (this.state == 'DEAD') {
-		// 	this.die()
-		// }
+		if (this.state == 'DEAD') {
+			this.die()
+			// console.log(nutrientsArr.length)
+		}
 		if (this.state == 'LIVE') {
 			fill(this.color)
 			// draw body parts
 			this.parts.forEach((part) => {
 				push();
 				translate(part.x, part.y);
+				stroke(this.color)
 				ellipse(0, 0, this.size);
 				pop();
 			});

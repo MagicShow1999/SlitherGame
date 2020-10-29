@@ -3,11 +3,6 @@ class Nutrient {
 	constructor(x, y) {
 		this.color = color(random(0, 255), random(0, 255), random(0, 255))
 		this.rad = 10
-		// this.noiseOffsetX = random(1000,2000)
-		// this.noiseOffsetY = random(2000,3000)
-	
-		// this.x = map(noise(this.noiseOffsetX), -1, 1, -1000, 1000)
-		// this.y = map(noise(this.noiseOffsetY), -1, 1, -1000, 2000)
 		this.x = x
 		this.y = y
 		// console.log(this.x,this.y)
@@ -19,6 +14,7 @@ class Nutrient {
 		ellipse(this.x, this.y, this.rad)
 
 		var dis = dist(this.x, this.y, x, y)
+		// the collision distance becomes longer if the snake radius (or just size) is large
 		if (dis < snakeRadius) {
 			return true
 		} else {
