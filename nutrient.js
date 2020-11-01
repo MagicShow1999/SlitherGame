@@ -11,6 +11,7 @@ class Nutrient {
 	display(x, y, snakeRadius) {
 		fill(this.color)
 		noStroke()
+
 		ellipse(this.x, this.y, this.rad)
 
 		var dis = dist(this.x, this.y, x, y)

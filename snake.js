@@ -1,8 +1,10 @@
 
 class Snake {
 
-	constructor(x,y) {
-		this.length = 20
+	constructor(x,y,name) {
+		this.name = name
+		this.length = int(random(15,20))
+		console.log(this.length)
 		this.size = this.calculateSize(this.length)
 		// this.size = 50
 		this.parts = []
@@ -13,11 +15,14 @@ class Snake {
 		this.lastDrawn = DRAW_SEGMENT_RATE
 		this.color = color(random(0), random(0,255), random(0,255))
 		this.calledOnce = true
+
 		// for AI snakes only
 		this.hasTarget = false
 		this.noiseOffset = noise(random(0, 1000))
 		this.nutrient = undefined;
-		this.nearestNutrient = nutrientsArr[0]
+		this.aicountdown = 50
+		this.aicountdownTwo = 25
+		this.obstacle = undefined
 	}
 
 	calculateSize(length) {
@@ -57,9 +62,11 @@ class Snake {
 	  // only allows acceleration if length is over 10
 	  const isFast = fastMode && this.length > 10;
 	  const speed = isFast ?  2 : 1;
-	  
+	  if (isFast) {
+	  	this.parts.splice[this.parts.length - 1]
+	  }
 	  this.x += Math.cos(this.heading) * speed;
-	  this.y += Math.sin(this.heading) * speed;
+	  this.y += Math.sin(this.heading) * speed; 
 	 
 
 	  // draw the snake body parts in a certain frame count
@@ -82,59 +89,99 @@ class Snake {
 	  
 	  return this;
 	}
+	checkIfDangerous() {
+		// let curMin, curObs
+		
+			totalSnakes.forEach (total => {
+			if (total != this && total.state == "LIVE") {
+				if (dist(this.x, this.y, total.x, total.y) < 100) {
+					console.log("AVOID HEAD!")
+					this.obstacle = total
+				}
+				
+				total.parts.forEach( part => {
+					if (dist(this.x, this.y, part.x, part.y) < 100) {
+						console.log("AVOID BODY!")
+						this.obstacle = part
+					}
+				})
+			}
+
+			})
+
+		
+
+		
+	}
 	// handle AI snake's movement:
 	// if it has a target (food) to eat, he will keep on that direction until he eats the food
 	// otherwise, it will roam randomly 
 	// In both cases, it will try its best to avoid colliding with other snakes' bodies.
-	updateAI() {
-		// console.log(this.hasTarget)
-		if (!this.hasTarget) {
-			nutrientsArr.forEach ( nutrient => {
-				const dis = dist(nutrient.x, nutrient.y, this.x, this.y)
-				// console.log('123')
-				if (dis < 100) {
-					this.hasTarget = true
-					this.nutrient = nutrient
-					// console.log(nutrient)
+	
+	updateAI(){
+		this.checkIfDangerous()
+
+		if (!this.obstacle) {
+			if (!this.hasTarget) {
+				nutrientsArr.forEach ( nutrient => {
+					const dis = dist(nutrient.x, nutrient.y, this.x, this.y)
+					if (dis < 100 && this.nutrient != nutrient) {
+						this.hasTarget = true
+						this.nutrient = nutrient
+						// console.log(nutrient)
+					}
+					 
+				})
+				this.update({headingDegree: map(this.noiseOffset, 0, 1, -3.14, 3.14), fastMode: false})
+				this.noiseOffset++
+			}
+			
+			else {
+				const dis = dist(this.nutrient.x, this.nutrient.y, this.x, this.y)
+				if (dis <= 15 || this.aicountdown < 0) {
+					this.hasTarget = false
+					this.aicountdown = 50
 				}
-				 
-			})
-			this.update({headingDegree: map(this.noiseOffset, 0, 1, -3.14, 3.14), fastMode: false})
-			this.noiseOffset++
-		}
-		// console.log(this.heading)
-		else {
-			const dis = dist(this.nutrient.x, this.nutrient.y, this.x, this.y)
-			if (dis <= 10) {
-				this.hasTarget = false
-				// this.update({headingDegree: random(-3.14,3.14), fastMode: false})
-				
-			} 
-			// console.log(AIheadDegree(this.x, this.y, this.nutrient.x, this.nutrient.y))
-			this.update(AIheadDegree(this.x, this.y, this.nutrient.x, this.nutrient.y))
-				
-			
-			
+				// console.log(this.aicountdown)
+				this.aicountdown--
+				this.update(AIheadDegree(this.x, this.y, this.nutrient.x, this.nutrient.y, true))	
+			}
+		} else {
+			if (this.aicountdownTwo > 0) {
+
+				const {headingDegree, fastMode} = AIheadDegree(this.x, this.y, this.obstacle.x, this.obstacle.y)
+				// console.log(headingDegree)
+				this.update({headingDegree: 0 - headingDegree, fastMode: true})	
+			} else {
+				this.aicountdownTwo = 30
+				this.obstacle = undefined
+			}
+			this.aicountdownTwo--
 		}
 	}
 	grow() {
 		this.length += 2
 	}
-	// make the snake parts separate and stop moving
+	// the snake's head and body parts become nutrients
 	die() {
+		if (this.calledOnce) {
+
+			nutrientsArr.push(new Nutrient(this.x, this.y))
+		}
 		this.parts.forEach( part => {
 			push();
 			translate(part.x, part.y);
 			// spawn new nutrients at the location where the snake dies
 			if (this.calledOnce) {
-				nutrientsArr.push(new Nutrient(this.x, this.y))
+				
 				nutrientsArr.push(new Nutrient(part.x, part.y))
+				
 			}
 			pop();
 		})
 		this.speed = 0
 		this.calledOnce = false
-	}
+		}
 	// check collision with other snakes' body
 	checkCollision(that) {
 		if (that.state == "LIVE") {
@@ -154,12 +201,15 @@ class Snake {
 		
 	}
 	display() {
+		
+		
 		// console.log(this.state)
 		if (this.state == 'DEAD') {
 			this.die()
 			// console.log(nutrientsArr.length)
 		}
 		if (this.state == 'LIVE') {
+
 			fill(this.color)
 			// draw body parts
 			this.parts.forEach((part) => {
@@ -180,6 +230,9 @@ class Snake {
 			if (this.y > MAPSIZE || this.y < MAPSIZE) {
 				this.y = constrain(this.y, 0 - MAPSIZE, MAPSIZE)
 			}
+			// draw head
+			fill(this.color)
+			noStroke()
 			ellipse(0, 0, this.size);
 
 			// draw two eyes
@@ -194,6 +247,7 @@ class Snake {
 			ellipse(this.size * 0.2,  0 - this.size * 0.2, this.size * 0.1)
 			pop();
 		}
+		// this.scale = map(this.length, 20, 200, 1, 1/3)
 		
 	}
 }
