@@ -65,8 +65,8 @@ class Snake {
 	  if (isFast) {
 	  	this.parts.splice[this.parts.length - 1]
 	  }
-	  this.x += Math.cos(this.heading) * speed;
-	  this.y += Math.sin(this.heading) * speed; 
+	  this.x += Math.cos(this.heading) * speed / scaleVal;
+	  this.y += Math.sin(this.heading) * speed / scaleVal; 
 	 
 
 	  // draw the snake body parts in a certain frame count
@@ -95,13 +95,13 @@ class Snake {
 			totalSnakes.forEach (total => {
 			if (total != this && total.state == "LIVE") {
 				if (dist(this.x, this.y, total.x, total.y) < 100) {
-					console.log("AVOID HEAD!")
+					
 					this.obstacle = total
 				}
 				
 				total.parts.forEach( part => {
 					if (dist(this.x, this.y, part.x, part.y) < 100) {
-						console.log("AVOID BODY!")
+						
 						this.obstacle = part
 					}
 				})
@@ -215,7 +215,7 @@ class Snake {
 			this.parts.forEach((part) => {
 				push();
 				translate(part.x, part.y);
-				stroke(this.color)
+				stroke(100)
 				ellipse(0, 0, this.size);
 				pop();
 			});

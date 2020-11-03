@@ -1,6 +1,6 @@
 /* 
 TODO:
-4. add GAME BEFORE state: prompt user to choose color and name for their snake
+4. add GAME BEFORE state: prompt user to choose color and name for their snake?
 5. use different background to differentiate space outside the map
 */
 var nutrientsArr = []
@@ -19,15 +19,16 @@ function setup() {
   
 	background(0)
   // spawn a player snake
-  snake = new Snake(1000,0, "Player")
-  // snake.length = 100
+  snake = new Snake( 0 ,0, "Player")
+  
+
 	// spawn nutrients in the map
   for (let i = 0; i < 400; i++) {
     nutrientsArr.push(new Nutrient(random(0 - MAPSIZE, MAPSIZE), random(0 - MAPSIZE,MAPSIZE)))
   }
   // spawn AI snakes
-  for (let i = 0; i < 5; i++) {
-    AIsnakes.push(new Snake(random(-300,300), random(-300,300), generateName()))
+  for (let i = 0; i < 10; i++) {
+    AIsnakes.push(new Snake(random(-1000,1000), random(-1000,1000), generateName()))
     // AIsnakes.push(new Snake(-100,100,"Test"))
   }
 	
@@ -37,7 +38,7 @@ function draw() {
   clear();
 	background(50)
   fill(255)
-  // rect(100,100,100,100)
+
 
   totalSnakes = [...AIsnakes, snake]
 
@@ -56,9 +57,7 @@ function draw() {
  
   scale(scaleVal)
   push()
-  // rect(0-MAPSIZE- 1000, 0, 1000, MAPSIZE)
-  // rect(MAPSIZE, 0, 1000, MAPSIZE)
-  // translate((windowWidth / 2 - snake.x ) * scaleVal , (windowHeight / 2 - snake.y) * scaleVal)
+ 
   translate(windowWidth/2/scaleVal - snake.x , windowHeight/2/scaleVal - snake.y )
  
 
@@ -66,12 +65,14 @@ function draw() {
   while(nutrientsArr.length <= 400) {
     nutrientsArr.push(new Nutrient(new Nutrient(random(0 - MAPSIZE, MAPSIZE), random(0 - MAPSIZE,MAPSIZE))))
   }
-  
+  // draw rectangles with a different background color to differentiate space within and outside of the map
+  noStroke()
+  rect(MAPSIZE,0-MAPSIZE * 2,MAPSIZE * 2, MAPSIZE * 4)
+  rect(0 - MAPSIZE * 2,0-MAPSIZE,MAPSIZE, MAPSIZE * 2)
+  rect(0 - MAPSIZE * 3, 0-MAPSIZE * 2, MAPSIZE * 4 , MAPSIZE)
+  rect(0- MAPSIZE * 3, MAPSIZE, MAPSIZE * 4 , MAPSIZE)
   if (state == 'GAME START') {
-    // noFill();
-
-    // handleAISnakeMovements()
-
+  
     // update the snake's heading degree according to mouse position
     const heading = headDegree()
     
@@ -81,7 +82,7 @@ function draw() {
 
   handleAISnakeMovements()
   snake.display()
-  // console.log("Player pos:", snake.x, snake.y)
+ 
   nutrientsCollisionHandler()
   if (state == 'GAME OVER') {
   // console.log('GAMEOVER')
